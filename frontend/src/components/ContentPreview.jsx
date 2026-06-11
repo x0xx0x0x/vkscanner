@@ -23,8 +23,13 @@ export default function ContentPreview({ result, t }) {
   const hasDocScreenshot = scanType === 'document' && result.document_screenshot;
   const hasEmailHtml     = scanType === 'email'    && result.email_body_html;
   const hasUrlPreview    = scanType === 'url'      && result.url_site_preview;
+  const hasGenericPreview = scanType === 'document' && result.document_file_previews && Object.keys(result.document_file_previews).length > 0;
 
-  if (!hasDocScreenshot && !hasEmailHtml && !hasUrlPreview) return null;
+  if (!hasDocScreenshot && !hasEmailHtml && !hasUrlPreview && !hasGenericPreview) return null;
+
+  const [showGenericPreview, setShowGenericPreview] = useState(false);
+  const [showDocScreenshot, setShowDocScreenshot] = useState(false);
+  const [genericViewMode, setGenericViewMode] = useState({}); // { filename: 'source' | 'preview' }
 
   /* ── Risk color border ── */
   const score = result.risk_score ?? 0;
@@ -145,17 +150,21 @@ export default function ContentPreview({ result, t }) {
             <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `${riskColor}22`, color: riskColor, border: `1px solid ${riskColor}55`, fontWeight: 700 }}>
               {riskLabel} {score}/100
             </span>
-            <ZoomBar />
+            <button onClick={() => setShowDocScreenshot(!showDocScreenshot)} style={{ padding: '4px 12px', fontSize: '11px', background: 'rgba(96, 165, 250, 0.18)', color: 'var(--cyan)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+              {showDocScreenshot ? (isEs ? '👁 Ocultar' : '👁 Hide') : (isEs ? '👁 Ver Documento' : '👁 View Document')}
+            </button>
+            {showDocScreenshot && <ZoomBar />}
           </div>
         </div>
 
-        <div style={containerStyle}>
+        {showDocScreenshot && (
+          <div style={containerStyle}>
           {/* Fake browser chrome */}
           <div style={browserBarStyle}>
             <div style={trafficLightStyle('#ef4444')} />
             <div style={trafficLightStyle('#f59e0b')} />
             <div style={trafficLightStyle('#10b981')} />
-            <span style={{ marginLeft: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', flex: 1 }}>
+            <span style={{ marginLeft: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               📄 {result.target}
             </span>
             <a href={src} download={`${result.target}_preview.png`}
@@ -165,14 +174,15 @@ export default function ContentPreview({ result, t }) {
           </div>
 
           {/* Screenshot */}
-          <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '520px', background: '#fff' }}>
+          <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '520px', background: '#0f172a', textAlign: 'center', padding: '16px 0' }}>
             <img
               src={src}
               alt="Document first-page preview"
-              style={{ display: 'block', transform: `scale(${zoom})`, transformOrigin: 'top left', width: `${100 / zoom}%`, transition: 'transform 0.2s' }}
+              style={{ display: 'inline-block', height: `${520 * zoom}px`, width: 'auto', maxWidth: zoom <= 1.0 ? '100%' : 'none', transition: 'height 0.2s, max-width 0.2s', objectFit: 'contain', background: '#fff', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
             />
           </div>
         </div>
+        )}
       </div>
     );
   }
@@ -206,7 +216,7 @@ export default function ContentPreview({ result, t }) {
             <div style={trafficLightStyle('#ef4444')} />
             <div style={trafficLightStyle('#f59e0b')} />
             <div style={trafficLightStyle('#10b981')} />
-            <span style={{ marginLeft: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', flex: 1 }}>
+            <span style={{ marginLeft: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               📧 {result.email_extracted_headers?.From || result.target}
             </span>
             {/* Threat badge overlay */}
@@ -277,7 +287,7 @@ export default function ContentPreview({ result, t }) {
                 overflowY: 'auto',
                 background: 'rgba(8, 11, 17, 0.95)',
                 lineHeight: '1.6',
-                whiteSpace: 'pre-wrap',
+                lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                 wordBreak: 'break-all',
               }}>
                 {html}
@@ -477,6 +487,72 @@ export default function ContentPreview({ result, t }) {
             </div>
           )}
         </div>
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════════
+     GENERIC DOCUMENT — Extracted text/code
+  ═══════════════════════════════════════════ */
+  if (hasGenericPreview && !hasDocScreenshot) {
+    return (
+      <div style={{ marginBottom: '24px' }}>
+        <div className="results-panel__section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>📄 {isEs ? 'Contenido Extraído del Documento' : 'Extracted Document Content'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `${riskColor}22`, color: riskColor, border: `1px solid ${riskColor}55`, fontWeight: 700 }}>
+              {riskLabel} {score}/100
+            </span>
+            <button onClick={() => setShowGenericPreview(!showGenericPreview)} style={{ padding: '4px 12px', fontSize: '11px', background: 'rgba(96, 165, 250, 0.18)', color: 'var(--cyan)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+              {showGenericPreview ? (isEs ? '👁 Ocultar' : '👁 Hide') : (isEs ? '👁 Ver Contenido' : '👁 View Content')}
+            </button>
+            {showGenericPreview && <ZoomBar />}
+          </div>
+        </div>
+        
+        {showGenericPreview && (
+          <div style={containerStyle}>
+             <div style={browserBarStyle}>
+               <div style={trafficLightStyle('#ef4444')} />
+               <div style={trafficLightStyle('#f59e0b')} />
+               <div style={trafficLightStyle('#10b981')} />
+               <span style={{ marginLeft: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                 📄 {result.target}
+               </span>
+             </div>
+             <div style={{ padding: '16px', maxHeight: '500px', overflowY: 'auto', background: '#0f172a' }}>
+               {Object.entries(result.document_file_previews).map(([filename, content]) => {
+                 const isHtml = filename.toLowerCase().endsWith('.html') || filename.toLowerCase().endsWith('.htm');
+                 const mode = genericViewMode[filename] || 'source';
+                 
+                 return (
+                 <div key={filename} style={{ marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'monospace' }}>{filename}</div>
+                      {isHtml && (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <button style={tabBtnStyle(mode === 'preview')} onClick={() => setGenericViewMode(prev => ({...prev, [filename]: 'preview'}))}>
+                            {isEs ? '👁 Vista' : '👁 Preview'}
+                          </button>
+                          <button style={tabBtnStyle(mode === 'source')} onClick={() => setGenericViewMode(prev => ({...prev, [filename]: 'source'}))}>
+                            {isEs ? '</> HTML' : '</> Source'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {isHtml && mode === 'preview' ? (
+                      <div style={{ background: '#fff', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+                        <iframe srcDoc={content} sandbox="" style={{ display: 'block', transform: `scale(${zoom})`, transformOrigin: 'top left', width: `${100 / zoom}%`, height: `${300 / zoom}px`, border: 'none', background: '#fff', transition: 'transform 0.2s' }} title="HTML Preview" />
+                      </div>
+                    ) : (
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: `${11 * zoom}px`, color: '#e2e8f0', margin: 0, fontFamily: 'monospace', transition: 'font-size 0.2s' }}>{content}</pre>
+                    )}
+                 </div>
+                 );
+               })}
+             </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -233,7 +233,7 @@ export default function YaraRulesPanel({ t }) {
                     fontSize: '11px',
                     lineHeight: '1.5',
                     fontFamily: 'var(--font-mono)',
-                    whiteSpace: 'pre-wrap',
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                     maxHeight: '300px',
                     overflowY: 'auto'
                   }}>

@@ -182,7 +182,7 @@ export default function EmailScanResults({ result, isEs, getUrlStatus, getFileSt
               <span>{showRaw ? '▲ Collapse' : '▼ Expand'}</span>
             </div>
             {showRaw && (
-              <pre style={{ marginTop: '10px', background: '#040711', padding: '12px', fontSize: '10px', maxHeight: '300px', overflow: 'auto', whiteSpace: 'pre-wrap', border: '1px solid var(--border-subtle)' }}>
+              <pre style={{ marginTop: '10px', background: '#040711', padding: '12px', fontSize: '10px', maxHeight: '300px', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word', border: '1px solid var(--border-subtle)' }}>
                 {eh.Raw}
               </pre>
             )}

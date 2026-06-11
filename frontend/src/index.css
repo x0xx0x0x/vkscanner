@@ -482,6 +482,8 @@ body::before {
   padding: 36px;
   box-shadow: var(--shadow-card);
   animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .results-panel__summary {
@@ -598,6 +600,7 @@ body::before {
   font-weight: 700;
   font-size: 15px;
   color: var(--text-primary);
+  word-break: break-word;
 }
 
 .finding-card__impact {
@@ -616,6 +619,8 @@ body::before {
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 10px;
+  word-break: break-word;
+
 }
 
 .badge {
@@ -801,6 +806,7 @@ body.theme-light .debug-step__detail {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 /* Sticky Action Column styling for horizontal scroll support */

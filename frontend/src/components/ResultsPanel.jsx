@@ -3,6 +3,7 @@ import RiskGauge from './RiskGauge';
 import FindingCard from './FindingCard';
 import DebugPanel from './DebugPanel';
 import EmailScanResults from './EmailScanResults';
+import ContentPreview from './ContentPreview';
 
 // Copy components
 function CopyButton({ text, label = "COPY", isDefanged = false }) {
@@ -458,7 +459,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
             <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; color: #333; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; font-family: monospace;">
               🔍 ${isEs ? 'Fragmento de Código Analizado' : 'Analyzed Code Snippet'} - ${filename}
             </h3>
-            <pre style="background: #0f172a; color: #f8fafc; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 10px; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; text-align: left; margin: 0; line-height: 1.4;">${content}</pre>
+            <pre style="background: #0f172a; color: #f8fafc; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 10px; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; word-wrap: break-word; text-align: left; margin: 0; line-height: 1.4;">${content}</pre>
           </div>
         `;
       });
@@ -963,10 +964,11 @@ export default function ResultsPanel({ result: rawResult, t }) {
         <div style={{
           display: 'flex',
           gap: '8px',
-          overflowX: 'auto',
+          flexWrap: 'wrap',
           paddingBottom: '12px',
           marginBottom: '24px',
-          borderBottom: '1px solid var(--border-primary)'
+          borderBottom: '1px solid var(--border-primary)',
+          maxWidth: '100%'
         }}>
           {rawResult.map((res, idx) => {
             const isSelected = idx === activeResultIdx;
@@ -984,16 +986,17 @@ export default function ResultsPanel({ result: rawResult, t }) {
                   fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: isSelected ? 700 : 400,
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  maxWidth: '100%',
+                  overflow: 'hidden'
                 }}
               >
-                <span>{res.risk_score >= 70 ? '🔴' : res.risk_score >= 35 ? '⚠️' : '🟢'}</span>
-                {res.target}
-                <span style={{ fontSize: '10px', opacity: 0.6 }}>({res.risk_score}/100)</span>
+                <span style={{ flexShrink: 0 }}>{res.risk_score >= 70 ? '🔴' : res.risk_score >= 35 ? '⚠️' : '🟢'}</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.target}</span>
+                <span style={{ fontSize: '10px', opacity: 0.6, flexShrink: 0 }}>({res.risk_score}/100)</span>
               </button>
             );
           })}
@@ -1008,6 +1011,8 @@ export default function ResultsPanel({ result: rawResult, t }) {
       </div>
 
       <div style={{ display: activeTab === "summary" ? "block" : "none" }}>
+
+      <ContentPreview result={result} t={t} />
 
       {/* 1. Key Metadata Card displayed first */}
       {((result.document_file_metadata && Object.keys(result.document_file_metadata).length > 0) || result.email_extracted_headers) && (
@@ -1031,11 +1036,11 @@ export default function ResultsPanel({ result: rawResult, t }) {
               fontSize: '13px',
             }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', textAlign: 'left' }}>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>
                   {isEs ? 'Objetivo Analizado' : 'Scanned Target'}
                 </span>
-                <strong style={{ fontFamily: 'var(--font-mono)', wordBreak: 'break-all', color: 'var(--text-primary)' }}>{result.target}</strong>
+                <strong style={{ fontFamily: 'var(--font-mono)', wordBreak: 'break-all', color: 'var(--text-primary)', display: 'block' }}>{result.target}</strong>
               </div>
               
               {/* If it is a document, show its size & author */}
@@ -1067,11 +1072,11 @@ export default function ResultsPanel({ result: rawResult, t }) {
                           <strong style={{ color: 'var(--text-primary)' }}>{m.created_at.split('T')[0]}</strong>
                         </div>
                       )}
-                      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: '4px' }}>
+                      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: '4px', minWidth: 0 }}>
                         <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '11px', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 600 }}>
                           SHA-256 Hash
                         </span>
-                        <strong style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)', wordBreak: 'break-all', fontSize: '12px' }}>
+                        <strong style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)', wordBreak: 'break-all', fontSize: '12px', display: 'block' }}>
                           {m.sha256}
                         </strong>
                       </div>
@@ -1476,7 +1481,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                             fontFamily: 'var(--font-mono)',
                             fontSize: '11px',
                             lineHeight: '1.4',
-                            whiteSpace: 'pre-wrap',
+                            whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                             maxHeight: '150px',
                             overflowY: 'auto'
                           }}>
@@ -2221,7 +2226,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                                         overflow: 'auto',
                                         border: '1px solid rgba(255, 255, 255, 0.03)',
                                         borderRadius: '4px',
-                                        whiteSpace: 'pre-wrap',
+                                        whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                                         wordBreak: 'break-all',
                                         textAlign: 'left'
                                       }}>
@@ -2327,7 +2332,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                                             borderRadius: '4px',
                                             fontSize: '11px',
                                             fontFamily: 'var(--font-mono)',
-                                            whiteSpace: 'pre-wrap',
+                                            whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                                             wordBreak: 'break-all',
                                             maxHeight: '200px',
                                             overflow: 'auto'
@@ -2350,7 +2355,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                                             fontSize: '12px',
                                             lineHeight: '1.5',
                                             fontFamily: 'var(--font-mono)',
-                                            whiteSpace: 'pre-wrap',
+                                            whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                                             wordBreak: 'break-all',
                                             maxHeight: '300px',
                                             overflow: 'auto',
@@ -2450,7 +2455,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                                   fontSize: '11px',
                                   fontFamily: 'var(--font-mono)',
                                   color: 'var(--text-secondary)',
-                                  whiteSpace: 'pre-wrap',
+                                  whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                                   wordBreak: 'break-all'
                                 }}>
                                   {fileStrings}
@@ -2711,7 +2716,7 @@ export default function ResultsPanel({ result: rawResult, t }) {
                           fontSize: '11px',
                           maxHeight: '200px',
                           overflow: 'auto',
-                          whiteSpace: 'pre-wrap',
+                          whiteSpace: 'pre-wrap', wordBreak: 'break-all', wordWrap: 'break-word',
                           wordBreak: 'break-all',
                           textAlign: 'left'
                         }}>
