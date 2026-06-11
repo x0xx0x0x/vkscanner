@@ -1,0 +1,1 @@
+"""VK Scanner API routers."""
